@@ -1,6 +1,8 @@
 import re
 import itertools
 import pandas as pd
+import datetime
+
 
 from distutils.version import LooseVersion
 
@@ -12,9 +14,23 @@ def get_value(cell, dtype):
     """Get a cell value according to the column data type."""
     if dtype in numbers:
         return cell["value"]
-
+        
     elif dtype in dates:
-        return pd.Timestamp(cell["value"])
+        try:
+            return pd.Timestamp(cell["value"])
+        except Exception as e:
+            
+            
+            dt = datetime.datetime.strptime( cell["value"], '%Y-%m-%d' )
+            year =dt.year
+            #check if year is greater than pandas max
+            year =  (year - ( year -  pd.Timestamp.max.year ) )-1   if( year > pd.Timestamp.max.year) else  year
+            
+            #check if it is smaller than the minimum
+            year = (year + (  pd.Timestamp.min.year - year ) )+1   if  (year < pd.Timestamp.min.year) else year
+                    
+           # return pd.to_datetime( cell["value"], format='%Y-%m-%d %H:%M:%S', errors='ignore').time
+            return pd.Timestamp(year, dt.month, dt.day, 12)
 
     elif dtype == "currency":
         try:
